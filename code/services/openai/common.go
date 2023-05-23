@@ -37,6 +37,7 @@ type ChatGPT struct {
 	Lb          *loadbalancer.LoadBalancer
 	ApiKey      []string
 	ApiUrl      string
+	ApiModel    string
 	HttpProxy   string
 	Platform    PlatForm
 	AzureConfig AzureConfig
@@ -185,8 +186,9 @@ func (gpt *ChatGPT) sendRequestWithBodyType(link, method string,
 
 func GetProxyClient(proxyString string) (*http.Client, error) {
 	var client *http.Client
+	timeOutDuration := time.Duration(initialization.GetConfig().OpenAIHttpClientTimeOut) * time.Second
 	if proxyString == "" {
-		client = &http.Client{Timeout: 110 * time.Second}
+		client = &http.Client{Timeout: timeOutDuration}
 	} else {
 		proxyUrl, err := url.Parse(proxyString)
 		if err != nil {
@@ -197,7 +199,7 @@ func GetProxyClient(proxyString string) (*http.Client, error) {
 		}
 		client = &http.Client{
 			Transport: transport,
-			Timeout:   110 * time.Second,
+			Timeout:   timeOutDuration,
 		}
 	}
 	return client, nil
@@ -223,6 +225,7 @@ func NewChatGPT(config initialization.Config) *ChatGPT {
 		ApiUrl:    config.OpenaiApiUrl,
 		HttpProxy: config.HttpProxy,
 		Platform:  platform,
+		ApiModel:  config.OpenaiModel,
 		AzureConfig: AzureConfig{
 			BaseURL:        AzureApiUrlV1,
 			ResourceName:   config.AzureResourceName,
